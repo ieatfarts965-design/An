@@ -1,0 +1,108 @@
+local StarterGui = game:GetService("StarterGui")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local backpack = player:WaitForChild("Backpack")
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+local ScreenGui = Instance.new("ScreenGui", player.PlayerGui)
+ScreenGui.Name = "TP"
+ScreenGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 260, 0, 100)
+Frame.Position = UDim2.new(0.5, -130, 0.5, -50)
+Frame.BackgroundColor3 = Color3.fromRGB(2, 2, 2)
+Frame.Active = true
+Frame.Draggable = true
+Frame.BorderSizePixel = 0
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 15)
+
+local Stroke = Instance.new("UIStroke", Frame)
+Stroke.Color = Color3.fromRGB(255, 255, 255)
+Stroke.Thickness = 1
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, -20, 0, 35)
+Title.Position = UDim2.new(0, 10, 0, 10)
+Title.Text = "charlie kirk hub TP"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 20
+Title.BackgroundTransparency = 1
+Title.TextXAlignment = Enum.TextXAlignment.Center
+
+local ToggleButton = Instance.new("TextButton", Frame)
+ToggleButton.Size = UDim2.new(0, 200, 0, 50)
+ToggleButton.Position = UDim2.new(0.5, -100, 0, 45)
+ToggleButton.Text = "Teleport"
+ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.TextSize = 20
+ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ToggleButton.BorderSizePixel = 0
+ToggleButton.AutoButtonColor = false
+Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(0, 12)
+
+local spots = {
+    CFrame.new(-402.18, -6.34, 131.83) * CFrame.Angles(0, math.rad(-20.08), 0),
+    CFrame.new(-416.66, -6.34, -2.05) * CFrame.Angles(0, math.rad(-62.89), 0),
+    CFrame.new(-329.37, -4.68, 18.12) * CFrame.Angles(0, math.rad(-30.53), 0),
+}
+
+local REQUIRED_TOOL = "Flying Carpet"
+local lastStealer = nil
+local isToggled = false
+
+local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local function equipFlyingCarpet()
+    local tool = char:FindFirstChild(REQUIRED_TOOL) or backpack:FindFirstChild(REQUIRED_TOOL)
+    if not tool then
+        return false
+    end
+    humanoid:EquipTool(tool)
+    while char:FindFirstChildOfClass("Tool") ~= tool do task.wait() end
+    return true
+end
+
+local function block(plr)
+    if not plr or plr == player then return end
+    pcall(function()
+        StarterGui:SetCore("PromptBlockPlayer", plr)
+    end)
+end
+
+local function teleportAll()
+    if not equipFlyingCarpet() then return end
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player then
+            lastStealer = plr
+            break
+        end
+    end
+
+    for _, spot in ipairs(spots) do
+        hrp.CFrame = spot
+        task.wait(0.12)
+    end
+
+    if lastStealer then
+        block(lastStealer)
+    end
+end
+
+ToggleButton.MouseButton1Click:Connect(function()
+    isToggled = not isToggled
+
+    if isToggled then
+        TweenService:Create(ToggleButton, tweenInfo, {BackgroundColor3 = Color3.fromRGB(0, 200, 80)}):Play()
+        spawn(teleportAll)
+    else
+        TweenService:Create(ToggleButton, tweenInfo, {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+    end
+end)
